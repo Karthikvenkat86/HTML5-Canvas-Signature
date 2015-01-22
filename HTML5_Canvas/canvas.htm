@@ -1,0 +1,119 @@
+<!Doctype html>
+<html>
+<head>
+	<meta name="viewport" content="width = device-width,height = device-height" />
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js" ></script>
+<script>
+
+var context = null;
+var clickX = new Array();
+var clickY = new Array();
+var clickDrag = new Array();
+var paint;
+
+function addClick(x, y, dragging)
+{
+  clickX.push(x);
+  clickY.push(y);
+  clickDrag.push(dragging);
+}
+
+$(function(){
+
+	context = document.getElementById("canvasElement").getContext("2d");
+	
+	$('#canvasElement').bind('mousedown',function(e){
+	  var mouseX = e.pageX - this.offsetLeft;
+	  var mouseY = e.pageY - this.offsetTop;
+			
+	  paint = true;
+	  addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop,false);
+	  redraw();
+	});
+
+	$('#canvasElement').bind('mousemove',function(e){
+	  if(paint){
+		addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
+		redraw();
+	  }
+	});
+
+
+	$('#canvasElement').bind('mouseup',function(e){
+	  paint = false;
+	});
+
+	$('#canvasElement').bind('mousecancel',function(e){
+	  paint = false;
+	});
+	
+	$('#clearCanvasSimple').bind('mousedown',function(e)
+	{
+		clickX = new Array();
+		clickY = new Array();
+		clickDrag = new Array();
+
+		context.fillStyle = '#ffffff'; // Work around for Chrome
+		context.fillRect(0, 0, 400, 400); // Fill in the canvas with white
+		context.width = context.width; // clears the canvas 
+
+	});
+
+});
+
+function redraw(){
+  context.width = context.width; // Clears the canvas  
+  context.strokeStyle = "#df4b26";
+  context.lineJoin = "round";
+  context.lineWidth = 3;
+			
+  for(var i=0; i < clickX.length; i++)
+  {		
+    context.beginPath();
+    if(clickDrag[i] && i){
+      context.moveTo(clickX[i-1], clickY[i-1]);
+     }else{
+       context.moveTo(clickX[i]-1, clickY[i]);
+     }
+     context.lineTo(clickX[i], clickY[i]);
+     context.closePath();
+     context.stroke();
+  }
+}
+
+function saveCoOrdinates(){
+	alert(clickX.length);
+	var jsonObj = {'Xcoordinates':clickX,'Ycoordinates':clickY,'clickDrag':clickDrag};	
+	window.localStorage.setItem("coordinates",JSON.stringify(jsonObj));
+}
+
+function openCanvas() {
+	var jsonObjStr = window.localStorage.getItem("coordinates");
+	var jsonObj = JSON.parse(jsonObjStr);
+	context = document.getElementById("canvasElement").getContext("2d");
+	clickX = jsonObj.Xcoordinates;
+	clickY =  jsonObj.Ycoordinates;
+	clickDrag = jsonObj.clickDrag;
+	redraw();
+}
+</script>
+	<script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js" ></script>
+</head>
+<body>
+<div data-role="page" >
+		<div data-role="header">
+			<h1>Signature Capture</h1>
+		</div>
+	<div data-role="content" >
+		<canvas id="canvasElement" height="400px" width="400px" style="padding:0px;margin:0px;border:1px solid black"></canvas>
+		<button id="clearCanvasSimple">Clear Me</button>
+		<button id="clearCanvasSimple" onclick="saveCoOrdinates()" >Save Me</button>
+		<button id="clearCanvasSimple" onclick="openCanvas()" >Open</button>
+	</div>
+	<div data-role="footer">
+			Copy @ rites reserved
+	</div>
+</div>
+</body>
+</html>
